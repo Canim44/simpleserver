@@ -1,13 +1,7 @@
-CFLAGS = -Wall
-CPPFLAGS = -Wall
+CFLAGS = -Wall -g
+CPPFLAGS = -Wall -g
 
 all: simpled ssSet ssGet ssDigest ssRun
-
-csapp.h:
-	wget http://csapp.cs.cmu.edu/2e/ics2/code/include/csapp.h
-
-csapp.c:
-	wget http://csapp.cs.cmu.edu/2e/ics2/code/src/csapp.c
 
 csapp.o: csapp.h csapp.c
 
