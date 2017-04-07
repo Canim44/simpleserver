@@ -1,4 +1,6 @@
 # simpleserver
+Authors: Aaron Mueller, Connor VanMeter
+=======
 TODO:
 * Get makefile and working program; test and discover behavior -before- starting
 * Build `simpled`
