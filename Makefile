@@ -5,20 +5,20 @@ all: simpled ssSet ssGet ssDigest ssRun
 
 csapp.o: csapp.h csapp.c
 
-simpled: simpled.cpp csapp.o 
-	g++ $(CPPFLAGS) simpled.cpp csapp.o -lpthread -o simpled
+simpled: simpled.c csapp.o 
+	gcc $(CPPFLAGS) simpled.c csapp.o -lpthread -o simpled
 
-ssSet: ssSet.cpp csapp.o 
-	g++ $(CPPFLAGS) ssSet.cpp csapp.o -lpthread -o ssSet
+ssSet: ssSet.c csapp.o 
+	gcc $(CPPFLAGS) ssSet.c csapp.o -lpthread -o ssSet
 
-ssGet: ssGet.cpp csapp.o
-	g++ $(CPPFLAGS) ssGet.cpp csapp.o -lpthread -o ssGet
+ssGet: ssGet.c csapp.o
+	gcc $(CPPFLAGS) ssGet.c csapp.o -lpthread -o ssGet
 
-ssDigest: ssDigest.cpp csapp.o
-	g++ $(CPPFLAGS) ssDigest.cpp csapp.o -lpthread -o ssDigest
+ssDigest: ssDigest.c csapp.o
+	gcc $(CPPFLAGS) ssDigest.c csapp.o -lpthread -o ssDigest
 
-ssRun: ssRun.cpp csapp.o
-	g++ $(CPPFLAGS) ssRun.cpp csapp.o -lpthread -o ssRun
+ssRun: ssRun.c csapp.o
+	gcc $(CPPFLAGS) ssRun.c csapp.o -lpthread -o ssRun
 
 .PHONY: clean
 clean:
