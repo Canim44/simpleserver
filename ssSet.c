@@ -1,7 +1,7 @@
 #include "csapp.h"
 
 int main(int argc, char** argv){
-	int toserverfd, port;
+	int toserverfd, port, type = 0;
 	unsigned int secretkey;
 	char *host, *varName, *varValue;
 	char buf[MAXLINE];
@@ -29,8 +29,8 @@ int main(int argc, char** argv){
 		Close(toserverfd);
 		return -2;
 	}
-
-	Rio_writen(toserverfd, &0, sizeof(int));
+	
+	Rio_writen(toserverfd, &type, 1);
 	Rio_readlineb(&rio, buf, MAXLINE);
 
 	Close(toserverfd);

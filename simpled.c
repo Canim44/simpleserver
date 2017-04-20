@@ -47,7 +47,7 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 	return 0;
 }
 
-int simpleGet(char *variableName, char *value, int *resultLength) {
+int simpleGet(char *variableName, char *value) {
 	printf("Request type = get\n");
 
 	int i;
@@ -69,7 +69,7 @@ int simpleGet(char *variableName, char *value, int *resultLength) {
 	return -2;
 }
 
-int simpleDigest(char *data, int dataLength, char *result, int *resultLength) {
+int simpleDigest(char *data, int dataLength, char *result) {
 	printf("Request type = digest\n");
 
 	char* command = strcat("sh -c \'echo `/bin/hostname` ", data); 
@@ -81,7 +81,7 @@ int simpleDigest(char *data, int dataLength, char *result, int *resultLength) {
 	return 0;
 }
 
-int simpleRun(char *request, char *result, int *resultLength) {
+int simpleRun(char *request, char *result) {
 	printf("Request type = run\n");
 
 	if (strcmp(request, "inet") == 0) {
@@ -145,13 +145,12 @@ int main(int argc, char **argv) {
 		printf("Secret Key: %u\n", clientkey);
 
 		if (realkey != clientkey) {
-			clientbuf[0] = 1;
+			clientbuf[0] = (char)1;
 			Rio_writen(connfd, clientbuf, 1);
 			Close(connfd);
 			printf("i0--------------------------\n");
 			continue;
 		}
-
 
 		// Get client program type
 		Rio_readinitb(&rio, connfd);
@@ -164,20 +163,19 @@ int main(int argc, char **argv) {
 				simpleSet("TEST", "test", 4);
 				break;
 			case 1:
-				simpleGet("TEST", "GET", 4);
+				simpleGet("TEST", "GET");
 				break;
 			case 2:
-				simpleDigest("DATA", 8, "RESULT", &8);
+				simpleDigest("DATA", 8, "RESULT");
 				break;
 			case 3:
-				simpleRun("RUN", "RESULT", &8);
+				simpleRun("RUN", "RESULT");
 				break;
 			default:
-				printf("Invalid request");
+				printf("Invalid request\n");
 				break;
 		}	
 		// Close connection
-
 		Close(connfd);
 		printf("--------------------------\n");
 	}
