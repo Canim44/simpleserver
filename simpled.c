@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
 		Rio_readnb(&rio, buf, sizeof(int));
 		clientkey = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
 			((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
-		printf("Secret Key: %i\n", clientkey);
+		printf("Secret Key: %u\n", clientkey);
 		Close(connfd);
 	}
 

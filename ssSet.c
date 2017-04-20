@@ -22,7 +22,13 @@ int main(int argc, char** argv){
 	Rio_readinitb(&rio, toserverfd);
 
 	Rio_writen(toserverfd, &secretkey, sizeof(int));
-	Rio_readlineb(&rio, buf, MAXLINE);
+	Rio_readnb(&rio, buf, 1);
+
+	if (buf[0] == (char) 1) {
+		fprintf(stderr, "failed\n");
+		Close(toserverfd);
+		return -2;
+	}
 
 	Close(toserverfd);
 	return 0;
