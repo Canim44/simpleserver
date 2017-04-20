@@ -24,6 +24,9 @@ int main(int argc, char** argv){
 	Rio_writen(toserverfd, &secretkey, sizeof(int));
 	Rio_readlineb(&rio, buf, MAXLINE);
 
+	Rio_writen(toserverfd, &0, sizeof(int));
+	Rio_readlineb(&rio, buf, MAXLINE);
+
 	Close(toserverfd);
 	return 0;
 }
