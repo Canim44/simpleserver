@@ -143,8 +143,7 @@ int main(int argc, char **argv) {
 		clientkey = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
 			((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
 		printf("Secret Key: %u\n", clientkey);
-		
-		// Check clientkey; CONTINUE if wrong
+
 		if (realkey != clientkey) {
 			clientbuf[0] = 1;
 			Rio_writen(connfd, clientbuf, 1);
@@ -152,6 +151,7 @@ int main(int argc, char **argv) {
 			printf("i0--------------------------\n");
 			continue;
 		}
+
 
 		// Get client program type
 		Rio_readinitb(&rio, connfd);
@@ -177,6 +177,7 @@ int main(int argc, char **argv) {
 				break;
 		}	
 		// Close connection
+
 		Close(connfd);
 		printf("--------------------------\n");
 	}
