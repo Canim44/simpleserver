@@ -9,12 +9,7 @@ int varSize = 10;	// default size of var array (flexible)
 int nVars = 0;		// index of last set variable value
 unsigned int realkey;	// actual secret key value to access server
 
-int simpleSet(char *MachineName, int TCPport, int SecretKey, char *variableName, char *value, int dataLength) {
-	printf("Secret key = %d\n", SecretKey);
-	if (SecretKey != realkey) {
-		return -1;
-	}
-	
+int simpleSet(char *variableName, char *value, int dataLength) {
 	printf("Request type = set\n");
 
 	// check if more space is needed; allocate more if so
@@ -52,12 +47,7 @@ int simpleSet(char *MachineName, int TCPport, int SecretKey, char *variableName,
 	return 0;
 }
 
-int simpleGet(char *MachineName, int TCPport, int SecretKey, char *variableName, char *value, int *resultLength) {
-	printf("Secret key = %d\n", SecretKey);
-	if (SecretKey != realkey) {
-		return -1;
-	}
-	
+int simpleGet(char *variableName, char *value, int *resultLength) {
 	printf("Request type = get\n");
 
 	int i;
@@ -79,12 +69,7 @@ int simpleGet(char *MachineName, int TCPport, int SecretKey, char *variableName,
 	return -2;
 }
 
-int simpleDigest(char *MachineName, int TCPport, int SecretKey, char *data, int dataLength, char *result, int *resultLength) {
-	printf("Secret key = %d\n", SecretKey);
-	if (SecretKey != realkey) {
-		return -1;
-	}
-	
+int simpleDigest(char *data, int dataLength, char *result, int *resultLength) {
 	printf("Request type = digest\n");
 
 	char* command = strcat("sh -c \'echo `/bin/hostname` ", data); 
@@ -96,12 +81,7 @@ int simpleDigest(char *MachineName, int TCPport, int SecretKey, char *data, int 
 	return 0;
 }
 
-int simpleRun(char *MachineName, int TCPport, int SecretKey, char *request, char *result, int *resultLength) {
-	printf("Secret key = %d\n", SecretKey);
-	if (SecretKey != realkey) {
-		return -1;
-	}
-
+int simpleRun(char *request, char *result, int *resultLength) {
 	printf("Request type = run\n");
 
 	if (strcmp(request, "inet") == 0) {
@@ -124,11 +104,12 @@ int simpleRun(char *MachineName, int TCPport, int SecretKey, char *request, char
 }
 
 int main(int argc, char **argv) {
-	int listenfd, connfd, port;
+	int listenfd, connfd, port, type;
 	socklen_t clientlen;
 	struct sockaddr_in clientaddr;
 	struct hostent *hp;
 	char *haddrp;
+	char *clientbuf[MAXLINE];
 	char buf[MAXLINE];
 	unsigned int clientkey;
 	rio_t rio;
@@ -140,8 +121,6 @@ int main(int argc, char **argv) {
 	port = atoi(argv[1]);
 	realkey = atoi(argv[2]);
 
-	//TODO: input handling for `port` and `secretkey`
-
 	// allocate environment variables
 	varName = malloc(varSize * (MAXVARLEN+1));
 	varValue = malloc(varSize * (MAXVARLEN+1));
@@ -151,24 +130,54 @@ int main(int argc, char **argv) {
 		clientlen = sizeof(clientaddr);
 		connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
 
-		/* Determine the domain name and IP address of the client */
+		// Determine the domain name and IP address of the client
 		hp = Gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
 		haddrp = inet_ntoa(clientaddr.sin_addr);
 		printf("server connected to %s (%s)\n", hp->h_name, haddrp);
 		
+		// Get client secretkey
 		Rio_readinitb(&rio, connfd);
 		Rio_readnb(&rio, buf, sizeof(int));
+
+		// Convert clientkey from bytes to unsig int
 		clientkey = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
 			((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
 		printf("Secret Key: %u\n", clientkey);
-<<<<<<< HEAD
-=======
+
 		if (realkey != clientkey) {
+			clientbuf[0] = 1;
+			Rio_writen(connfd, clientbuf, 1);
 			Close(connfd);
-			printf("--------------------------\n");
+			printf("i0--------------------------\n");
 			continue;
 		}
->>>>>>> 5b1aa32aeee36ab9afa4e151ad56ea02f7fde402
+
+
+		// Get client program type
+		Rio_readinitb(&rio, connfd);
+		Rio_readnb(&rio, buf, sizeof(int));
+		type = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
+			((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
+		printf("Type: %d/n", type);
+		switch (type) {
+			case 0:
+				simpleSet("TEST", "test", 4);
+				break;
+			case 1:
+				simpleGet("TEST", "GET", 4);
+				break;
+			case 2:
+				simpleDigest("DATA", 8, "RESULT", &8);
+				break;
+			case 3:
+				simpleRun("RUN", "RESULT", &8);
+				break;
+			default:
+				printf("Invalid request");
+				break;
+		}	
+		// Close connection
+
 		Close(connfd);
 		printf("--------------------------\n");
 	}

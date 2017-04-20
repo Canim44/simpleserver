@@ -30,6 +30,9 @@ int main(int argc, char** argv){
 		return -2;
 	}
 
+	Rio_writen(toserverfd, &0, sizeof(int));
+	Rio_readlineb(&rio, buf, MAXLINE);
+
 	Close(toserverfd);
 	return 0;
 }
