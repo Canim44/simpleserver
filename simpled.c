@@ -129,6 +129,8 @@ int main(int argc, char **argv) {
 	struct sockaddr_in clientaddr;
 	struct hostent *hp;
 	char *haddrp;
+	char buf[MAXLINE];
+	rio_t rio;
 	if (argc != 3) {
 		fprintf(stderr, "usage: %s <port> <secretKey>\n", argv[0]);
 		exit(EXIT_FAILURE);
@@ -152,8 +154,10 @@ int main(int argc, char **argv) {
 		hp = Gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
 		haddrp = inet_ntoa(clientaddr.sin_addr);
 		printf("server connected to %s (%s)\n", hp->h_name, haddrp);
-
-		echo(connfd);
+		
+		Rio_readinitb(&rio, connfd);
+		Rio_readnb(&rio, buf, sizeof(int));
+		printf("Secret Key: 0x%02x 0x%02x 0x%02x 0x%02x\n", buf[0], buf[1], buf[2], buf[3]);
 		Close(connfd);
 	}
 
