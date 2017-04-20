@@ -130,6 +130,7 @@ int main(int argc, char **argv) {
 	struct hostent *hp;
 	char *haddrp;
 	char buf[MAXLINE];
+	unsigned int clientkey;
 	rio_t rio;
 	if (argc != 3) {
 		fprintf(stderr, "usage: %s <port> <secretKey>\n", argv[0]);
@@ -157,7 +158,9 @@ int main(int argc, char **argv) {
 		
 		Rio_readinitb(&rio, connfd);
 		Rio_readnb(&rio, buf, sizeof(int));
-		printf("Secret Key: 0x%02x 0x%02x 0x%02x 0x%02x\n", buf[0], buf[1], buf[2], buf[3]);
+		clientkey = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
+			((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
+		printf("Secret Key: %i\n", clientkey);
 		Close(connfd);
 	}
 

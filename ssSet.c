@@ -1,7 +1,8 @@
 #include "csapp.h"
 
 int main(int argc, char** argv){
-	int toserverfd, port, secretkey;
+	int toserverfd, port;
+	unsigned int secretkey;
 	char *host, *varName, *varValue;
 	char buf[MAXLINE];
 	rio_t rio;
@@ -13,7 +14,7 @@ int main(int argc, char** argv){
 
 	host = argv[1];
 	port = atoi(argv[2]);
-	secretkey = atoi(argv[3]);
+	secretkey = htonl(atoi(argv[3]));
 	varName = argv[4];
 	varValue = argv[5];
 
