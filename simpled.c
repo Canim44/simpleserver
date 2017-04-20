@@ -161,7 +161,16 @@ int main(int argc, char **argv) {
 		clientkey = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
 			((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
 		printf("Secret Key: %u\n", clientkey);
+<<<<<<< HEAD
+=======
+		if (realkey != clientkey) {
+			Close(connfd);
+			printf("--------------------------\n");
+			continue;
+		}
+>>>>>>> 5b1aa32aeee36ab9afa4e151ad56ea02f7fde402
 		Close(connfd);
+		printf("--------------------------\n");
 	}
 
 	free(varName);
