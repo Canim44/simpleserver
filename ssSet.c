@@ -1,7 +1,7 @@
 #include "csapp.h"
 
 int main(int argc, char** argv){
-	int toserverfd, port;
+	int toserverfd, port, secretkey;
 	char* host;
 	rio_t rio;
 	if (argc != 6) {
@@ -12,6 +12,7 @@ int main(int argc, char** argv){
 
 	host = argv[1];
 	port = atoi(argv[2]);
+	secretkey = atoi(argv[3]);
 	toserverfd = open_clientfd(host, port);
 	Rio_readinitb(&rio, toserverfd);
 	
