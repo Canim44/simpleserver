@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[]){
 	int toserverfd, port, secretkey;
-	char* host;
+	char* host, value;
 	rio_t rio;
 	if (argc != 5) {
 		fprintf(stderr, "usage: %s <host> <port> <secretKey> <value>\n",
@@ -13,6 +13,8 @@ int main(int argc, char* argv[]){
 	host = argv[1];
 	port = atoi(argv[2]);
 	secretkey = atoi(argv[3]);
+	value = argv[4];
+
 	toserverfd = open_clientfd(host, port);
 	Rio_readinitb(&rio, toserverfd);
 	
