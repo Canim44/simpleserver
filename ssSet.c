@@ -5,7 +5,6 @@ int main(int argc, char** argv){
 	unsigned int secretkey;
 	char *host, *varName, *varValue;
 	char *junk = "cat";
-	char buf[MAXLINE];
 	rio_t rio;
 	if (argc != 6) {
 		fprintf(stderr, "usage: %s <host> <port> <secretKey> <variableName> <variableValue>\n",
