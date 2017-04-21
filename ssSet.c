@@ -24,13 +24,6 @@ int main(int argc, char** argv){
 	Rio_readinitb(&rio, toserverfd);
 	// Send client secretkey to server
 	Rio_writen(toserverfd, &secretkey, sizeof(int));
-	Rio_readnb(&rio, buf, 1);
-	// Check if client secretkey is valid
-	if (buf[0] == (char) 1) {
-		fprintf(stderr, "failed\n");
-		Close(toserverfd);
-		return -2;
-	}
 	// Send type of process (SET, 0) to server
 	Rio_writen(toserverfd, &type, 1);
 	// Send three bytes of padding to server

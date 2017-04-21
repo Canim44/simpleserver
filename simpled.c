@@ -25,7 +25,7 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 		int i;
 		for (i = nVars; i < varSize; i++) {
 			varName[i] = malloc(MAXVARNAME+1);
-			varValue[i] = malloc(MAXVARVAL+1);
+			varValue[i] = malloc(MAXVARVALUE+1);
 		}
 	}
 
@@ -115,7 +115,6 @@ int main(int argc, char **argv) {
 	struct sockaddr_in clientaddr;
 	struct hostent *hp;
 	char *haddrp;
-	char *clientbuf[MAXLINE];
 	char buf[MAXLINE];
 	unsigned int clientkey;
 	rio_t rio;
@@ -128,6 +127,8 @@ int main(int argc, char **argv) {
 	realkey = atoi(argv[2]);
 
 	// allocate environment variables
+	varName = malloc(varSize * MAXVARNAME);
+	varValue = malloc(varSize * MAXVARVALUE);
 	for (i = 0; i < varSize; i++) {
 		varName[i] = (char*)malloc(MAXVARNAME+1);
 		varValue[i] = (char*)malloc(MAXVARVALUE+1);
@@ -153,15 +154,10 @@ int main(int argc, char **argv) {
 		printf("Secret Key: %u\n", clientkey);
 
 		if (realkey != clientkey) {
-			clientbuf[0] = (char)1;
-			Rio_writen(connfd, clientbuf, 1);
 			Close(connfd);
 			printf("--------------------------\n");
 			continue;
 		}
-
-		clientbuf[0] = (char) 0;
-		Rio_writen(connfd, clientbuf, 1);
 
 		// Get client program type
 		Rio_readnb(&rio, buf, 1);
