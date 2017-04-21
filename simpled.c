@@ -122,8 +122,12 @@ int main(int argc, char **argv) {
 	realkey = atoi(argv[2]);
 
 	// allocate environment variables
-	varName = malloc(varSize * (MAXVARLEN+1));
-	varValue = malloc(varSize * (MAXVARLEN+1));
+	varName = malloc(varSize);
+	varValue = malloc(varSize);
+	for (int i = 0; i < varSize; i++) {
+		varName[i] = malloc(MAXVARLEN+1);
+		varValue[i] = malloc(MAXVARLEN+1);
+	}
 
 	listenfd = Open_listenfd(port);
 	while (1) {
@@ -158,7 +162,7 @@ int main(int argc, char **argv) {
 		// Get client program type
 		Rio_readnb(&rio, buf, 1);
 		type = buf[0] & 0xFF;
-		printf("Type: %d/n", type);
+		printf("Type: %d\n", type);
 		switch (type) {
 			case 0:
 				simpleSet("TEST", "test", 4);
