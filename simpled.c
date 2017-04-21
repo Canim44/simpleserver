@@ -53,10 +53,10 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 	return 0;
 }
 
-int simpleGet(char *variableName, char *value) {
+int simpleGet(int connfd, char *variableName) {
 	printf("Request type = get\n");
 
-	int i;
+	int i, length, send_length;
 	int index = -1;
 	for (i = 0; i < nVars; i++) {
 		if (strcmp(varName[i], variableName) == 0) {
@@ -66,11 +66,17 @@ int simpleGet(char *variableName, char *value) {
 	}
 	
 	if (index != -1) {
-		printf("Detail = %s:%s\n", variableName, value);
+		length = strlen(varValue[index]);
+		send_length = htonl(length);
+		Rio_writen(connfd, &send_length, sizeof(int));
+		Rio_writen(connfd, varValue[index], length);
+		printf("Detail = %s: %s\n", varName[index], varValue[index]);
 		printf("Completion = success\n");
 		return 0;
 	}
 
+	length = 0;
+	Rio_writen(connfd, &length, sizeof(int));
 	printf("Could not locate variable %s\n", variableName);
 	return -2;
 }
@@ -168,7 +174,7 @@ int main(int argc, char **argv) {
 		Rio_readnb(&rio, buf, 3);
 		switch (type) {
 			case 0: ;
-				char *name = malloc(16);
+				char *name = malloc(MAXVARNAME);
 				char *value;
 				int size;
 				Rio_readnb(&rio, buf, 16);	// name of variable
@@ -183,21 +189,29 @@ int main(int argc, char **argv) {
 				value = malloc(size);
 				Rio_readnb(&rio, buf+16, size);	// value of variable
 				strncpy(value, buf+16, size);
-				printf("%s %s %i\n", name, value, size);
-
 				simpleSet(name, value, size);
+
 				free(name);
 				free(value);
 				break;
-			case 1:
-				simpleGet("TEST", "GET");
+
+			case 1: ;
+				char *vname = malloc(MAXVARNAME);
+				Rio_readnb(&rio, buf, 16);
+				strncpy(vname, buf, 16);
+				simpleGet(connfd, vname);
+
+				free(name);
 				break;
-			case 2:
+
+			case 2: ;
 				simpleDigest("DATA", 8, "RESULT");
 				break;
-			case 3:
+
+			case 3: ;
 				simpleRun("RUN", "RESULT");
 				break;
+
 			default:
 				printf("Invalid request\n");
 				break;
