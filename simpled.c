@@ -1,5 +1,6 @@
 #include "csapp.h"
-#define MAXVARLEN 128
+#define MAXVARNAME 15
+#define MAXVARVAL 100
 
 void echo(int connfd) { printf("%d", connfd); }
 
@@ -13,13 +14,19 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 	printf("Request type = set\n");
 
 	// check if more space is needed; allocate more if so
-	if (varSize < nVars) {
+	if (varSize <= nVars) {
 		varSize += 10;
-		varName = realloc(varName, varSize * (MAXVARLEN+1));
-		varValue = realloc(varValue, varSize * (MAXVARLEN+1));
+		varName = realloc(varName, varSize);
+		varValue = realloc(varValue, varSize);
 		if (!varName || !varValue) {
 			fprintf(stderr, "allocation error\n");
 			exit(EXIT_FAILURE);
+		}
+
+		int i;
+		for (i = nVars; i < varSize; i++) {
+			varName[i] = malloc(MAXVARNAME+1);
+			varValue[i] = malloc(MAXVARVAL+1);
 		}
 	}
 
@@ -125,8 +132,8 @@ int main(int argc, char **argv) {
 	varName = malloc(varSize);
 	varValue = malloc(varSize);
 	for (i = 0; i < varSize; i++) {
-		varName[i] = malloc(MAXVARLEN+1);
-		varValue[i] = malloc(MAXVARLEN+1);
+		varName[i] = malloc(MAXVARNAME+1);
+		varValue[i] = malloc(MAXVARVAL+1);
 	}
 
 	listenfd = Open_listenfd(port);
