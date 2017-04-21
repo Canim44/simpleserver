@@ -17,7 +17,7 @@ int main(int argc, char** argv){
 	secretkey = htonl(atoi(argv[3]));
 	varName = argv[4];
 	varValue = argv[5];
-	varSize = sizeof(varValue);
+	varSize = htonl(sizeof(varValue));
 
 	toserverfd = open_clientfd(host, port);
 	Rio_readinitb(&rio, toserverfd);
@@ -30,7 +30,7 @@ int main(int argc, char** argv){
 	// Send null-terminated variable name to server
 	Rio_writen(toserverfd, &varName, 16);
 	// Send length of value to server
-	Rio_writen(toserverfd, &varSize, 4);
+	Rio_writen(toserverfd, &varSize, sizeof(int));
 	// Send value to server
 	Rio_writen(toserverfd, &varValue, varSize);
 

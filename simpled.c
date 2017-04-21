@@ -160,12 +160,33 @@ int main(int argc, char **argv) {
 		}
 
 		// Get client program type
-		Rio_readnb(&rio, buf, 1);
-		type = buf[0] & 0xFF;
+		Rio_readnb(&rio, buf+4, 1);
+		type = buf[4] & 0xFF;
 		printf("Type: %d\n", type);
+		// get 3 bytes of padding
+		Rio_readnb(&rio, buf+5, 3);
 		switch (type) {
-			case 0:
-				simpleSet("TEST", "test", 4);
+			case 0: ;
+				char *name = malloc(16);
+				char *value;
+				int size;
+				Rio_readnb(&rio, buf+8, 16);	// name of variable
+				strncpy(name, buf+8, 16);
+				Rio_readnb(&rio, buf+24, sizeof(int));	// size of value
+				size = ((buf[24] & 0xFF) << 24) | ((buf[25] & 0xFF) << 16) |
+					((buf[26] & 0xFF) << 8) | (buf[27] & 0xFF);
+				value = malloc(size);
+				Rio_readnb(&rio, buf+28, size);	// value of variable
+				strncpy(value, buf+28, size);
+				for (int i = 8; i < 28+size; i++) {	// print name, size, and val in hex
+					printf("0x%02x ", buf[i]);
+				}
+				printf("\n");
+				printf("%s %s %i\n", name, value, size);
+
+				simpleSet(name, value, size);
+				free(name);
+				free(value);
 				break;
 			case 1:
 				simpleGet("TEST", "GET");
