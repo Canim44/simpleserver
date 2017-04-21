@@ -13,13 +13,19 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 	printf("Request type = set\n");
 
 	// check if more space is needed; allocate more if so
-	if (varSize < nVars) {
+	if (varSize <= nVars) {
 		varSize += 10;
-		varName = realloc(varName, varSize * MAXVARNAME);
-		varValue = realloc(varValue, varSize * MAXVARVALUE);
+		varName = realloc(varName, varSize);
+		varValue = realloc(varValue, varSize);
 		if (!varName || !varValue) {
 			fprintf(stderr, "allocation error\n");
 			exit(EXIT_FAILURE);
+		}
+
+		int i;
+		for (i = nVars; i < varSize; i++) {
+			varName[i] = malloc(MAXVARNAME+1);
+			varValue[i] = malloc(MAXVARVAL+1);
 		}
 	}
 
@@ -122,8 +128,6 @@ int main(int argc, char **argv) {
 	realkey = atoi(argv[2]);
 
 	// allocate environment variables
-	varName = malloc(varSize * MAXVARNAME);
-	varValue = malloc(varSize * MAXVARVALUE);
 	for (i = 0; i < varSize; i++) {
 		varName[i] = (char*)malloc(MAXVARNAME+1);
 		varValue[i] = (char*)malloc(MAXVARVALUE+1);
