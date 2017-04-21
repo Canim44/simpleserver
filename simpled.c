@@ -1,6 +1,6 @@
 #include "csapp.h"
-#define MAXVARLEN 128
-
+#define MAXVARVALUE 100
+#define MAXVARNAME 16
 void echo(int connfd) { printf("%d", connfd); }
 
 char** varName;		// environment variable names
@@ -15,8 +15,8 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 	// check if more space is needed; allocate more if so
 	if (varSize < nVars) {
 		varSize += 10;
-		varName = realloc(varName, varSize * (MAXVARLEN+1));
-		varValue = realloc(varValue, varSize * (MAXVARLEN+1));
+		varName = realloc(varName, varSize * MAXVARNAME);
+		varValue = realloc(varValue, varSize * MAXVARVALUE);
 		if (!varName || !varValue) {
 			fprintf(stderr, "allocation error\n");
 			exit(EXIT_FAILURE);
@@ -122,11 +122,11 @@ int main(int argc, char **argv) {
 	realkey = atoi(argv[2]);
 
 	// allocate environment variables
-	varName = malloc(varSize);
-	varValue = malloc(varSize);
+	varName = malloc(varSize * MAXVARNAME);
+	varValue = malloc(varSize * MAXVARVALUE);
 	for (i = 0; i < varSize; i++) {
-		varName[i] = malloc(MAXVARLEN+1);
-		varValue[i] = malloc(MAXVARLEN+1);
+		varName[i] = (char*)malloc(MAXVARNAME+1);
+		varValue[i] = (char*)malloc(MAXVARVALUE+1);
 	}
 
 	listenfd = Open_listenfd(port);
