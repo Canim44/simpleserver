@@ -18,6 +18,10 @@ int main(int argc, char** argv){
 	varName = argv[4];
 	varValue = argv[5];
 	varSize = htonl(strlen(argv[5]));
+	for (int i = 0; i < strlen(varName); i++) {
+		printf("0x%02x ", varName[i]);
+	}
+	printf("\n");
 
 	toserverfd = open_clientfd(host, port);
 	Rio_readinitb(&rio, toserverfd);
@@ -26,13 +30,13 @@ int main(int argc, char** argv){
 	// Send type of process (SET, 0) to server
 	Rio_writen(toserverfd, &type, 1);
 	// Send three bytes of padding to server
-	Rio_writen(toserverfd, &junk, 3);
+	Rio_writen(toserverfd, junk, 3);
 	// Send null-terminated variable name to server
-	Rio_writen(toserverfd, &varName, 16);
+	Rio_writen(toserverfd, varName, 16);
 	// Send length of value to server
 	Rio_writen(toserverfd, &varSize, sizeof(int));
 	// Send value to server
-	Rio_writen(toserverfd, &varValue, varSize);
+	Rio_writen(toserverfd, varValue, varSize);
 
 	Close(toserverfd);
 	return 0;

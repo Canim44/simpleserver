@@ -146,6 +146,7 @@ int main(int argc, char **argv) {
 		
 		// Get client secretkey
 		Rio_readinitb(&rio, connfd);
+		memset(buf, '\0', sizeof(buf));
 		Rio_readnb(&rio, buf, sizeof(int));
 
 		// Convert clientkey from bytes to unsig int
@@ -172,12 +173,16 @@ int main(int argc, char **argv) {
 				int size;
 				Rio_readnb(&rio, buf, 16);	// name of variable
 				strncpy(name, buf, 16);
+				for (int i = 0; i < 16; i++) {
+					printf("0x%02x ", name[i]);
+				}
+				printf("\n");
 				Rio_readnb(&rio, buf, sizeof(int));	// size of value
 				size = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) |
 					((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
 				value = malloc(size);
-				Rio_readnb(&rio, buf, size);	// value of variable
-				strncpy(value, buf, size);
+				Rio_readnb(&rio, buf+16, size);	// value of variable
+				strncpy(value, buf+16, size);
 				printf("%s %s %i\n", name, value, size);
 
 				simpleSet(name, value, size);
