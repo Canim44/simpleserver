@@ -42,7 +42,7 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 	strcpy(varName[index], variableName);
 	strcpy(varValue[index], value);
 
-	printf("Detail = %s:%s\n", variableName, value);
+	printf("Detail = %s: %s\n", variableName, value);
 	printf("Completion = success\n");
 	return 0;
 }
@@ -104,7 +104,7 @@ int simpleRun(char *request, char *result) {
 }
 
 int main(int argc, char **argv) {
-	int listenfd, connfd, port, type;
+	int listenfd, connfd, port, type, i;
 	socklen_t clientlen;
 	struct sockaddr_in clientaddr;
 	struct hostent *hp;
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 	// allocate environment variables
 	varName = malloc(varSize);
 	varValue = malloc(varSize);
-	for (int i = 0; i < varSize; i++) {
+	for (i = 0; i < varSize; i++) {
 		varName[i] = malloc(MAXVARLEN+1);
 		varValue[i] = malloc(MAXVARLEN+1);
 	}
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
 			clientbuf[0] = (char)1;
 			Rio_writen(connfd, clientbuf, 1);
 			Close(connfd);
-			printf("i0--------------------------\n");
+			printf("--------------------------\n");
 			continue;
 		}
 
