@@ -1,7 +1,6 @@
 #include "csapp.h"
-#define MAXVARNAME 15
-#define MAXVARVAL 100
-
+#define MAXVARVALUE 100
+#define MAXVARNAME 16
 void echo(int connfd) { printf("%d", connfd); }
 
 char** varName;		// environment variable names
@@ -129,11 +128,9 @@ int main(int argc, char **argv) {
 	realkey = atoi(argv[2]);
 
 	// allocate environment variables
-	varName = malloc(varSize);
-	varValue = malloc(varSize);
 	for (i = 0; i < varSize; i++) {
-		varName[i] = malloc(MAXVARNAME+1);
-		varValue[i] = malloc(MAXVARVAL+1);
+		varName[i] = (char*)malloc(MAXVARNAME+1);
+		varValue[i] = (char*)malloc(MAXVARVALUE+1);
 	}
 
 	listenfd = Open_listenfd(port);
