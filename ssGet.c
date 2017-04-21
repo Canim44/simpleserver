@@ -34,6 +34,7 @@ int main(int argc, char* argv[]){
 		((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
 
 	if (length == 0) {
+		fprintf(stderr, "failed\n");
 		return -2;
 	}
 

@@ -5,7 +5,7 @@ void echo(int connfd) { printf("%d", connfd); }
 
 char** varName;		// environment variable names
 char** varValue;	// environment variable values
-int varSize = 10;	// default size of var array (flexible)
+int varSize = 512;	// default size of var array (flexible)
 int nVars = 0;		// index of last set variable value
 unsigned int realkey;	// actual secret key value to access server
 
@@ -14,7 +14,7 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 
 	// check if more space is needed; allocate more if so
 	if (varSize <= nVars) {
-		varSize += 10;
+		varSize += 512;
 		varName = realloc(varName, varSize);
 		varValue = realloc(varValue, varSize);
 		if (!varName || !varValue) {
@@ -25,7 +25,7 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 		int i;
 		for (i = nVars; i < varSize; i++) {
 			varName[i] = malloc(MAXVARNAME+1);
-			varValue[i] = malloc(MAXVARVALUE+1);
+			varValue[i] = malloc(MAXVARVALUE);
 		}
 	}
 
@@ -81,34 +81,55 @@ int simpleGet(int connfd, char *variableName) {
 	return -2;
 }
 
-int simpleDigest(char *data, int dataLength, char *result) {
+int simpleDigest(int connfd, char *data) {
 	printf("Request type = digest\n");
 
 	char* command = strcat("sh -c \'echo `/bin/hostname` ", data); 
 	command = strcat(command, " | /usr/bin/md5sum");
-	system(command);
+	
+	FILE* fp;
+	char path[256];
+
+	fp = popen(command, "r");
+	while (fgets(path, sizeof(path), fp) != NULL) {
+		Rio_writen(connfd, path, 256);
+	}
+	path[0] = '\0';
+	Rio_writen(connfd, path, 256);
+	pclose(fp);
 
 	printf("Detail = %s\n", data);
 	printf("Completion = success\n");
 	return 0;
 }
 
-int simpleRun(char *request, char *result) {
+int simpleRun(int connfd, char *request) {
 	printf("Request type = run\n");
 
+	FILE* fp;
+	char path[256];
+
 	if (strcmp(request, "inet") == 0) {
-		system("/sbin/ifconfig -a");
+		fp = popen("/sbin/ifconfig -a", "r");
 	}
 	else if (strcmp(request, "hosts") == 0) {
-		system("/bin/cat /etc/hosts");
+		fp = popen("/bin/cat /etc/hosts", "r");
 	}
 	else if (strcmp(request, "uptime") == 0) {
-		system("/usr/bin/uptime");
+		fp = popen("/usr/bin/uptime", "r");
 	}
 	else {
 		printf("Command not found\n");
+		Rio_writen(connfd, path, 256);
 		return -2;
 	}
+
+	while (fgets(path, sizeof(path), fp) != NULL) {
+		Rio_writen(connfd, path, 256);
+	}
+	path[0] = '\0';
+	Rio_writen(connfd, path, 256);
+	pclose(fp);
 
 	printf("Detail = %s\n", request);
 	printf("Completion = success\n");
@@ -133,11 +154,11 @@ int main(int argc, char **argv) {
 	realkey = atoi(argv[2]);
 
 	// allocate environment variables
-	varName = malloc(varSize * MAXVARNAME);
-	varValue = malloc(varSize * MAXVARVALUE);
+	varName = malloc(varSize);
+	varValue = malloc(varSize);
 	for (i = 0; i < varSize; i++) {
 		varName[i] = (char*)malloc(MAXVARNAME+1);
-		varValue[i] = (char*)malloc(MAXVARVALUE+1);
+		varValue[i] = (char*)malloc(MAXVARVALUE);
 	}
 
 	listenfd = Open_listenfd(port);
@@ -167,49 +188,69 @@ int main(int argc, char **argv) {
 		}
 
 		// Get client program type
-		Rio_readnb(&rio, buf, 1);
-		type = buf[0] & 0xFF;
+		Rio_readnb(&rio, buf+4, 1);
+		type = buf[4] & 0xFF;
 		printf("Type: %d\n", type);
 		// get 3 bytes of padding
-		Rio_readnb(&rio, buf, 3);
+		Rio_readnb(&rio, buf+5, 3);
 		switch (type) {
-			case 0: ;
+			case 0: ;	// set
 				char *name = malloc(MAXVARNAME);
 				char *value;
-				int size;
-				Rio_readnb(&rio, buf, 16);	// name of variable
+				unsigned int size;
+				Rio_readnb(&rio, buf+8, 16);	// name of variable
 				strncpy(name, buf, 16);
-				for (int i = 0; i < 16; i++) {
-					printf("0x%02x ", name[i]);
+
+				Rio_readnb(&rio, buf+24, sizeof(int));	// size of value
+				size = ((buf[24] & 0xFF) << 24) | ((buf[25] & 0xFF) << 16) |
+					((buf[26] & 0xFF) << 8) | (buf[27] & 0xFF);
+				if (size > MAXVARVALUE) {
+					size = MAXVARVALUE;
 				}
-				printf("\n");
-				Rio_readnb(&rio, buf, sizeof(int));	// size of value
-				size = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) |
-					((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
+
 				value = malloc(size);
-				Rio_readnb(&rio, buf+16, size);	// value of variable
-				strncpy(value, buf+16, size);
+				Rio_readnb(&rio, buf+28, size);	// value of variable
+				strncpy(value, buf+28, size);
 				simpleSet(name, value, size);
 
 				free(name);
 				free(value);
 				break;
 
-			case 1: ;
+			case 1: ;	// get
 				char *vname = malloc(MAXVARNAME);
-				Rio_readnb(&rio, buf, 16);
-				strncpy(vname, buf, 16);
+				Rio_readnb(&rio, buf+8, 16);
+				strncpy(vname, buf+8, 16);
 				simpleGet(connfd, vname);
 
-				free(name);
+				free(vname);
 				break;
 
-			case 2: ;
-				simpleDigest("DATA", 8, "RESULT");
+			case 2: ;	// digest
+				unsigned int digSize;
+				char *digVal;
+				Rio_readnb(&rio, buf+8, sizeof(int));	// size of value
+				digSize = ((buf[8] & 0xFF) << 24) | ((buf[9] & 0xFF) << 16) |
+					((buf[10] & 0xFF) << 8) | (buf[11] & 0xFF);
+				if (digSize > MAXVARVALUE) {
+					digSize = MAXVARVALUE;
+				}
+
+				digVal = malloc(digSize);
+				Rio_readnb(&rio, buf+12, digSize);	// value of variable
+				strncpy(digVal, buf+12, digSize);
+				simpleDigest(connfd, digVal);
+
+				free(digVal);
 				break;
 
-			case 3: ;
-				simpleRun("RUN", "RESULT");
+			case 3: ;	// run
+				char* command = malloc(8);
+				Rio_readnb(&rio, buf+8, 8);
+				strncpy(command, buf+8, 8);
+				simpleRun(connfd, command);
+
+				free(command);
 				break;
 
 			default:
