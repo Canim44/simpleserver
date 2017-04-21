@@ -48,7 +48,7 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 	strcpy(varName[index], variableName);
 	strcpy(varValue[index], value);
 
-	printf("Detail = %s: %s\n", variableName, value);
+	printf("Detail = %s: %s\n", varName[index], varValue[index]);
 	printf("Completion = success\n");
 	return 0;
 }
@@ -199,8 +199,7 @@ int main(int argc, char **argv) {
 				char *value;
 				unsigned int size;
 				Rio_readnb(&rio, buf+8, 16);	// name of variable
-				strncpy(name, buf, 16);
-
+				strncpy(name, buf+8, 16);
 				Rio_readnb(&rio, buf+24, sizeof(int));	// size of value
 				size = ((buf[24] & 0xFF) << 24) | ((buf[25] & 0xFF) << 16) |
 					((buf[26] & 0xFF) << 8) | (buf[27] & 0xFF);
