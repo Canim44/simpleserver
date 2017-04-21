@@ -152,11 +152,12 @@ int main(int argc, char **argv) {
 			continue;
 		}
 
+		clientbuf[0] = (char) 0;
+		Rio_writen(connfd, clientbuf, 1);
+
 		// Get client program type
-		Rio_readinitb(&rio, connfd);
-		Rio_readnb(&rio, buf, sizeof(int));
-		type = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
-			((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
+		Rio_readnb(&rio, buf, 1);
+		type = buf[0] & 0xFF;
 		printf("Type: %d/n", type);
 		switch (type) {
 			case 0:
