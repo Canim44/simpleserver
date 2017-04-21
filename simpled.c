@@ -190,7 +190,6 @@ int main(int argc, char **argv) {
 		// Get client program type
 		Rio_readnb(&rio, buf+4, 1);
 		type = buf[4] & 0xFF;
-		printf("Type: %d\n", type);
 		// get 3 bytes of padding
 		Rio_readnb(&rio, buf+5, 3);
 		switch (type) {
