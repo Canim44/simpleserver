@@ -15,8 +15,8 @@ int main(int argc, char** argv){
 	host = argv[1];
 	port = atoi(argv[2]);
 	secretkey = htonl(atoi(argv[3]));
-	varName = htonl(argv[4]);
-	varValue = htonl(argv[5]);
+	varName = argv[4];
+	varValue = argv[5];
 	varSize = htonl(strlen(argv[5]));
 
 	toserverfd = open_clientfd(host, port);
