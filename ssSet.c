@@ -5,6 +5,7 @@ int main(int argc, char** argv){
 	unsigned int secretkey;
 	char *host, *varName, *varValue;
 	char *junk = "cat";
+	char buf[MAXLINE];
 	rio_t rio;
 	if (argc != 6) {
 		fprintf(stderr, "usage: %s <host> <port> <secretKey> <variableName> <variableValue>\n",
@@ -36,6 +37,15 @@ int main(int argc, char** argv){
 	Rio_writen(toserverfd, &varSize, sizeof(int));
 	// Send value to server
 	Rio_writen(toserverfd, varValue, varSize);
+
+	// read success status and 3 bytes of padding
+	Rio_readnb(&rio, buf, sizeof(char));
+	Rio_readnb(&rio, buf+1, 3*sizeof(char));
+	
+	if (buf[0] == -1) {
+		fprintf(stderr, "failed\n");
+		return -2;
+	}
 
 	Close(toserverfd);
 	return 0;

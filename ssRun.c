@@ -29,18 +29,33 @@ int main(int argc, char** argv){
 	// Send program to server
 	Rio_writen(toserverfd, program, 8);
 	
-	// Read three bytes of padding from server
-	Rio_readnb(&rio, buf, 3);
-	
-	int count = 0;
-	while ((Rio_readnb(&rio, buf, 256))) {
-		printf("%s", buf);
-		count++;
-	}
-	
-	if (count == 1 && buf[0] == '\0') {
+	// Read success status and three bytes of padding from server
+	Rio_readnb(&rio, buf, sizeof(char));
+	Rio_readnb(&rio, buf+1, 3*sizeof(char));
+
+	if (buf[0] == -1) {
 		fprintf(stderr, "failed\n");
+		return -2;
 	}
+
+	int size = 0;
+	int pos = 8;
+	do {
+		Rio_readnb(&rio, buf+4, sizeof(int));
+		size = ((buf[4] & 0xFF) << 24) | ((buf[5] & 0xFF) << 16) |                     
+			((buf[6] & 0xFF) << 8) | (buf[7] & 0xFF);
+		if (size != 0) {
+			Rio_readnb(&rio, buf+pos, size);
+			pos += size;
+		}
+		else {
+			break;
+		}
+	} while (1);
+
+	if (buf[8]) {
+		printf("%s\n", buf+8);
+	} 
 
 	Close(toserverfd);
 	return 0;

@@ -9,8 +9,10 @@ char* junk = "dog"; 	// 3 bytes of padding
 int varSize = 512;	// default size of var array (flexible)
 int nVars = 0;		// index of last set variable value
 unsigned int realkey;	// actual secret key value to access server
+char success = (char) 0;
+char failure = (char) -1;
 
-int simpleSet(char *variableName, char *value, int dataLength) {
+int simpleSet(int connfd, char *variableName, char *value, int dataLength) {
 	printf("Request type = set\n");
 
 	// check if more space is needed; allocate more if so
@@ -49,6 +51,8 @@ int simpleSet(char *variableName, char *value, int dataLength) {
 	strcpy(varName[index], variableName);
 	strcpy(varValue[index], value);
 
+	Rio_writen(connfd, &success, sizeof(char));
+	Rio_writen(connfd, junk, 3*sizeof(char));
 	printf("Detail = %s: %s\n", varName[index], varValue[index]);
 	printf("Completion = success\n");
 	return 0;
@@ -65,9 +69,10 @@ int simpleGet(int connfd, char *variableName) {
 			break;
 		}
 	}
-	// Send three bytes of padding to server
-	Rio_writen(connfd, junk, 3);	
+
 	if (index != -1) {
+		Rio_writen(connfd, &success, sizeof(char));
+		Rio_writen(connfd, junk, 3*sizeof(char));
 		length = strlen(varValue[index]);
 		send_length = htonl(length);
 		Rio_writen(connfd, &send_length, sizeof(int));
@@ -77,8 +82,8 @@ int simpleGet(int connfd, char *variableName) {
 		return 0;
 	}
 
-	length = 0;
-	Rio_writen(connfd, &length, sizeof(int));
+	Rio_writen(connfd, &failure, sizeof(char));
+	Rio_writen(connfd, junk, 3*sizeof(char));
 	printf("Could not locate variable %s\n", variableName);
 	return -2;
 }
@@ -96,7 +101,12 @@ int simpleDigest(int connfd, char *data) {
 	char path[256];
 
 	fp = popen(command, "r");
-	Rio_writen(connfd, junk, 3);
+	if (fp == NULL) {
+		Rio_writen(connfd, &failure, sizeof(char));
+		Rio_writen(connfd, junk, 3*sizeof(char));
+	}
+	Rio_writen(connfd, &success, sizeof(char));
+	Rio_writen(connfd, junk, 3*sizeof(char));
 	printf("start whie loop\n");
 	while (fgets(path, sizeof(path), fp) != NULL) {
 		Rio_writen(connfd, path, 256);
@@ -114,9 +124,12 @@ int simpleDigest(int connfd, char *data) {
 int simpleRun(int connfd, char *request) {
 	printf("Request type = run\n");
 
+	int byte_limit_reached = 0;
+	int nBytes = 0;
+	int nBytes_prev = 0;
+	int send_length = 0;
 	FILE* fp;
-	char path[256];
-	Rio_writen(connfd, junk, 3);
+	char path[100];
 	if (strcmp(request, "inet") == 0) {
 		fp = popen("/sbin/ifconfig -a", "r");
 	}
@@ -128,15 +141,35 @@ int simpleRun(int connfd, char *request) {
 	}
 	else {
 		printf("Command not found\n");
-		Rio_writen(connfd, path, 256);
+		Rio_writen(connfd, &failure, sizeof(char));
+		Rio_writen(connfd, junk, 3*sizeof(char));
 		return -2;
 	}
-
+	
+	Rio_writen(connfd, &success, sizeof(char));
+	Rio_writen(connfd, junk, 3*sizeof(char));
 	while (fgets(path, sizeof(path), fp) != NULL) {
-		Rio_writen(connfd, path, 256);
+		nBytes += strlen(path);
+		if (nBytes > 100) {
+			nBytes = 100;
+		}
+		send_length = htonl(nBytes - nBytes_prev);
+		Rio_writen(connfd, &send_length, sizeof(int));
+		
+		if ((nBytes - nBytes_prev) == 0) {
+			byte_limit_reached = 1;
+			break;
+		}
+
+		Rio_writen(connfd, path, nBytes - nBytes_prev);
+		nBytes_prev = nBytes;
 	}
-	path[0] = '\0';
-	Rio_writen(connfd, path, 256);
+	
+	if (byte_limit_reached == 0) {
+		send_length = htonl(0);
+		Rio_writen(connfd, &send_length, sizeof(int));
+	}
+
 	pclose(fp);
 
 	printf("Detail = %s\n", request);
@@ -217,7 +250,7 @@ int main(int argc, char **argv) {
 				value = malloc(size);
 				Rio_readnb(&rio, buf+28, size);	// value of variable
 				strncpy(value, buf+28, size);
-				simpleSet(name, value, size);
+				simpleSet(connfd, name, value, size);
 
 				free(name);
 				free(value);

@@ -33,8 +33,14 @@ int main(int argc, char* argv[]){
 	// Send value to server
 	Rio_writen(toserverfd, value, strlen(argv[4]));
 
-	// Read three bytes of padding from server
-	Rio_readnb(&rio, buf, 3);
+	// Read success status and 3 bytes of padding from server
+	Rio_readnb(&rio, buf, sizeof(char));
+	Rio_readnb(&rio, buf+1, 3*sizeof(char));
+
+	if (buf[0] == -1) {
+		fprintf(stderr, "failed\n");
+		return -2;
+	}
 
 	int count = 0;
 	while ((Rio_readnb(&rio, buf, 256))) {

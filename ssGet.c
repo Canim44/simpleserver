@@ -30,20 +30,20 @@ int main(int argc, char* argv[]){
 	// Send null-terminated variable name to server
 	Rio_writen(toserverfd, varName, 16);
 
-	// Read three bytes of padding from server
-	Rio_readnb(&rio, buf, 3);
-	// Read size of value from server
-	Rio_readnb(&rio, buf, sizeof(int));
-	length = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
-		((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
-	// Check if variable found
-	if (length == 0) {
+	// Read success status and three bytes of padding from server
+	Rio_readnb(&rio, buf, sizeof(char));
+	Rio_readnb(&rio, buf+1, 3*sizeof(char));
+	if (buf[0] == -1) {
 		fprintf(stderr, "failed\n");
 		return -2;
 	}
+	// Read size of value from server
+	Rio_readnb(&rio, buf+4, sizeof(int));
+	length = ((buf[4] & 0xFF) << 24) | ((buf[5] & 0xFF) << 16) | 
+		((buf[6] & 0xFF) << 8) | (buf[7] & 0xFF);
 	// Read value of variable from server
-	Rio_readnb(&rio, buf, length);
-	strncpy(varValue, buf, length);
+	Rio_readnb(&rio, buf+8, length);
+	strncpy(varValue, buf+8, length);
 
 	printf("%s\n", varValue);
 
