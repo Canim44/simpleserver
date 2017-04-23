@@ -7,6 +7,7 @@ int main(int argc, char* argv[]){
 	char buf[MAXLINE];
 	char *junk = "cat";
 	rio_t rio;
+	
 	if (argc != 5) {
 		fprintf(stderr, "usage: %s <host> <port> <secretKey> <variableName>\n",
 				argv[0]);

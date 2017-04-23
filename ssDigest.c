@@ -7,6 +7,7 @@ int main(int argc, char* argv[]){
 	char *junk = "cat";
 	char buf[MAXLINE];
 	rio_t rio;
+
 	if (argc != 5) {
 		fprintf(stderr, "usage: %s <host> <port> <secretKey> <value>\n",
 				argv[0]);
@@ -30,7 +31,7 @@ int main(int argc, char* argv[]){
 	// Send length of value
 	Rio_writen(toserverfd, &varSize, sizeof(int));
 	// Send value to server
-	Rio_writen(toserverfd, value, varSize);
+	Rio_writen(toserverfd, value, strlen(argv[4]));
 
 	// Read three bytes of padding from server
 	Rio_readnb(&rio, buf, 3);
