@@ -85,18 +85,23 @@ int simpleGet(int connfd, char *variableName) {
 
 int simpleDigest(int connfd, char *data) {
 	printf("Request type = digest\n");
-
-	char* command = strcat("sh -c \'echo `/bin/hostname` ", data); 
-	command = strcat(command, " | /usr/bin/md5sum");
-	
+	char command[256] = "sh -c \'echo `/bin/hostname` ";
+	printf("assigned command: %s\n", command);
+	printf("data: %s\n", data);
+	strcat(command, data);
+	printf("done with strcat: %s\n", command); 
+	strcat(command, " | /usr/bin/md5sum\'");
+	printf("done with command: %s\n", command);
 	FILE* fp;
 	char path[256];
 
 	fp = popen(command, "r");
 	Rio_writen(connfd, junk, 3);
+	printf("start whie loop\n");
 	while (fgets(path, sizeof(path), fp) != NULL) {
 		Rio_writen(connfd, path, 256);
 	}
+	printf("done with while loop\n");
 	path[0] = '\0';
 	Rio_writen(connfd, path, 256);
 	pclose(fp);
