@@ -29,15 +29,18 @@ int main(int argc, char* argv[]){
 	// Send null-terminated variable name to server
 	Rio_writen(toserverfd, varName, 16);
 
+	// Read three bytes of padding from server
+	Rio_readnb(&rio, buf, 3);
+	// Read size of value from server
 	Rio_readnb(&rio, buf, sizeof(int));
 	length = ((buf[0] & 0xFF) << 24) | ((buf[1] & 0xFF) << 16) | 
 		((buf[2] & 0xFF) << 8) | (buf[3] & 0xFF);
-
+	// Check if variable found
 	if (length == 0) {
 		fprintf(stderr, "failed\n");
 		return -2;
 	}
-
+	// Read value of variable from server
 	Rio_readnb(&rio, buf, length);
 	strncpy(varValue, buf, length);
 

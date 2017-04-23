@@ -32,6 +32,9 @@ int main(int argc, char* argv[]){
 	// Send value to server
 	Rio_writen(toserverfd, value, varSize);
 
+	// Read three bytes of padding from server
+	Rio_readnb(&rio, buf, 3);
+
 	int count = 0;
 	while ((Rio_readnb(&rio, buf, 256))) {
 		printf("%s", buf);

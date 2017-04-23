@@ -5,6 +5,7 @@ void echo(int connfd) { printf("%d", connfd); }
 
 char** varName;		// environment variable names
 char** varValue;	// environment variable values
+char* junk = "dog"; 	// 3 bytes of padding
 int varSize = 512;	// default size of var array (flexible)
 int nVars = 0;		// index of last set variable value
 unsigned int realkey;	// actual secret key value to access server
@@ -64,7 +65,8 @@ int simpleGet(int connfd, char *variableName) {
 			break;
 		}
 	}
-	
+	// Send three bytes of padding to server
+	Rio_writen(connfd, junk, 3);	
 	if (index != -1) {
 		length = strlen(varValue[index]);
 		send_length = htonl(length);
@@ -91,6 +93,7 @@ int simpleDigest(int connfd, char *data) {
 	char path[256];
 
 	fp = popen(command, "r");
+	Rio_writen(connfd, junk, 3);
 	while (fgets(path, sizeof(path), fp) != NULL) {
 		Rio_writen(connfd, path, 256);
 	}
@@ -108,7 +111,7 @@ int simpleRun(int connfd, char *request) {
 
 	FILE* fp;
 	char path[256];
-
+	Rio_writen(connfd, junk, 3);
 	if (strcmp(request, "inet") == 0) {
 		fp = popen("/sbin/ifconfig -a", "r");
 	}

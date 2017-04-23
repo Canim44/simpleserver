@@ -28,7 +28,10 @@ int main(int argc, char** argv){
 	Rio_writen(toserverfd, junk, 3);
 	// Send program to server
 	Rio_writen(toserverfd, program, 8);
-
+	
+	// Read three bytes of padding from server
+	Rio_readnb(&rio, buf, 3);
+	
 	int count = 0;
 	while ((Rio_readnb(&rio, buf, 256))) {
 		printf("%s", buf);
