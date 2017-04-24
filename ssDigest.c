@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
 		send_length = strlen(argv[4]);
 	}
 
-	toserverfd = open_clientfd(host, port);
+	toserverfd = Open_clientfd(host, port);
 	Rio_readinitb(&rio, toserverfd);
 	// Send client secretkey to server
 	Rio_writen(toserverfd, &secretkey, sizeof(int));

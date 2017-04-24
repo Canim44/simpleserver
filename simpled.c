@@ -131,7 +131,8 @@ int simpleDigest(int connfd, char *data) {
 int simpleRun(int connfd, char *request) {
 	int length, nBytes = 0;
 	FILE* fp;
-	char path[100];
+	char path[256];
+	char ret[100];
 
 	printf("Request type = run\n");
 	
@@ -154,20 +155,32 @@ int simpleRun(int connfd, char *request) {
 	Rio_writen(connfd, &success, sizeof(char));
 	Rio_writen(connfd, junk, 3*sizeof(char));
 	// Get first 100 bytes of program output
+	
 	fgets(path, sizeof(path), fp);
-	// Count actual size of program output
-	while (path[nBytes]) {
-		nBytes++;
+	strcpy(ret, path);
+	nBytes += strlen(path);
+	while (fgets(path, sizeof(path), fp) != NULL) {
+		if (strlen(ret) + strlen(path) < 100) {
+			strcat(ret, path);
+			nBytes += strlen(path);
+		}
+		else {
+			strncat(ret, path, (100 - strlen(ret)));
+			nBytes = 100;
+			break;
+		}
 	}
+	
 	if(nBytes == 100) {
-		path[nBytes-1] = '\0';
+		path[99] = '\0';
 	}
+
 	// Convert to network order
 	length = htonl(nBytes);
 	// Write length of value to client
 	Rio_writen(connfd, &length, sizeof(int));
 	// Write length bytes of value to client
-	Rio_writen(connfd, path, nBytes);
+	Rio_writen(connfd, ret, nBytes);
 	
 	pclose(fp);
 
@@ -234,11 +247,10 @@ int main(int argc, char **argv) {
 		Rio_readnb(&rio, buf+5, 3);
 		switch (type) {
 			case 0: ;	// set
-				char name[MAXVARNAME];
 				char value[MAXVARVALUE];
 				unsigned int size;
 				Rio_readnb(&rio, buf+8, 16);	// name of variable
-				strncpy(name, buf+8, 16);
+				buf[23] = '\0';
 				Rio_readnb(&rio, buf+24, sizeof(int));	// size of value
 				size = ((buf[24] & 0xFF) << 24) | ((buf[25] & 0xFF) << 16) |
 					((buf[26] & 0xFF) << 8) | (buf[27] & 0xFF);
@@ -248,16 +260,15 @@ int main(int argc, char **argv) {
 
 				Rio_readnb(&rio, buf+28, size);	// value of variable
 				strncpy(value, buf+28, size);
-				simpleSet(connfd, name, value, size);
+				value[99] = '\0';
+				simpleSet(connfd, buf+8, value, size);
 				break;
 
 			case 1: ;	// get
-				char *vname = malloc(MAXVARNAME);
 				Rio_readnb(&rio, buf+8, 16);	// name of variable
-				strncpy(vname, buf+8, 16);
-				simpleGet(connfd, vname);
+				buf[23] = '\0';
+				simpleGet(connfd, buf+8);
 
-				free(vname);
 				break;
 
 			case 2: ;	// digest
@@ -274,11 +285,10 @@ int main(int argc, char **argv) {
 				break;
 
 			case 3: ;	// run
-				char* command = malloc(8);
+				char command[8];
 				Rio_readnb(&rio, buf+8, 8);	// program name
 				strncpy(command, buf+8, 8);
 				simpleRun(connfd, command);
-				free(command);
 				break;
 
 			default:

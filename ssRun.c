@@ -19,7 +19,7 @@ int main(int argc, char** argv){
 	secretkey = htonl(atoi(argv[3]));
 	program = argv[4];
 
-	toserverfd = open_clientfd(host, port);
+	toserverfd = Open_clientfd(host, port);
 	Rio_readinitb(&rio, toserverfd);
 	// Send client secretkey to server
 	Rio_writen(toserverfd, &secretkey, sizeof(int));
@@ -43,8 +43,9 @@ int main(int argc, char** argv){
 	size = ((buf[4] & 0xFF) << 24) | ((buf[5] & 0xFF) << 16) | 
 		((buf[6] & 0xFF) << 8) | (buf[7] & 0xFF);
 	// Display value to client
+	Rio_readnb(&rio, buf+8, size);
+
 	if (size != 0) {
-		Rio_readnb(&rio, buf+8, size);
 		printf("%s\n", buf+8);
 	}
 

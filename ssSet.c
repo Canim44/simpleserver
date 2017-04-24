@@ -20,7 +20,7 @@ int main(int argc, char** argv){
 	varValue = argv[5];
 	varSize = htonl(strlen(argv[5]));
 
-	toserverfd = open_clientfd(host, port);
+	toserverfd = Open_clientfd(host, port);
 	Rio_readinitb(&rio, toserverfd);
 	// Send client secretkey to server
 	Rio_writen(toserverfd, &secretkey, sizeof(int));
@@ -32,7 +32,7 @@ int main(int argc, char** argv){
 	Rio_writen(toserverfd, varName, 16);
 	// Send length of value to server
 	if (varSize > 100) {
-		varSize = 101;
+		varSize = 100;
 	}
 	Rio_writen(toserverfd, &varSize, sizeof(int));
 	// Send value to server
