@@ -22,6 +22,7 @@ int simpleSet(int connfd, char *variableName, char *value, int dataLength) {
 		varValue = realloc(varValue, varSize);
 		if (!varName || !varValue) {
 			fprintf(stderr, "allocation error\n");
+			Rio_writen(connfd, &failure, sizeof(char));
 			exit(EXIT_FAILURE);
 		}
 
@@ -41,19 +42,15 @@ int simpleSet(int connfd, char *variableName, char *value, int dataLength) {
 			break;
 		}
 	}
-	printf("finished variable name check\n");
 	// otherwise, put variable in next slot in array
 	if (index == -1) {
 		index = nVars;
 		nVars++;
 	}
-	printf("set index properly\n");
 	
 	// set var name and value
 	strcpy(varName[index], variableName);
-	printf("set variable name\n");
 	strcpy(varValue[index], value);
-	printf("set variable value \n");
 
 	Rio_writen(connfd, &success, sizeof(char));
 	Rio_writen(connfd, junk, 3*sizeof(char));
@@ -93,6 +90,7 @@ int simpleGet(int connfd, char *variableName) {
 }
 
 int simpleDigest(int connfd, char *data) {
+	int nBytes = 0;
 	printf("Request type = digest\n");
 	char command[256] = "sh -c \'echo `/bin/hostname` ";
 	printf("assigned command: %s\n", command);
@@ -102,22 +100,37 @@ int simpleDigest(int connfd, char *data) {
 	strcat(command, " | /usr/bin/md5sum\'");
 	printf("done with command: %s\n", command);
 	FILE* fp;
-	char path[256];
+	char path[100];
 
 	fp = popen(command, "r");
 	if (fp == NULL) {
 		Rio_writen(connfd, &failure, sizeof(char));
 		Rio_writen(connfd, junk, 3*sizeof(char));
 	}
+	// Write success byte and padding to client
 	Rio_writen(connfd, &success, sizeof(char));
 	Rio_writen(connfd, junk, 3*sizeof(char));
-	printf("start whie loop\n");
-	while (fgets(path, sizeof(path), fp) != NULL) {
-		Rio_writen(connfd, path, 256);
+	printf("fgets\n");
+	// Get first 100 bytes of program output
+	printf("Getting path\n");
+	fgets(path, sizeof(path), fp);
+	printf("Path: %s\n", path);
+	// Count actual size of program output
+	while (path[nBytes]) {
+		nBytes++;
 	}
-	printf("done with while loop\n");
-	path[0] = '\0';
-	Rio_writen(connfd, path, 256);
+	if(nBytes == 100) {
+		path[nBytes-1] = '\0';
+	}
+	printf("nBytes: %d\n", nBytes);
+	// Convert to network order
+	nBytes = htonl(nBytes);
+	// Write length of value to client
+	printf("Writing length to client\n");
+	Rio_writen(connfd, &nBytes, sizeof(int));
+	// Write length bytes of value to client
+	printf("Writing value to client\n");
+	Rio_writen(connfd, path, nBytes);
 	pclose(fp);
 
 	printf("Detail = %s\n", data);
@@ -126,14 +139,12 @@ int simpleDigest(int connfd, char *data) {
 }
 
 int simpleRun(int connfd, char *request) {
-	printf("Request type = run\n");
-
-	int byte_limit_reached = 0;
 	int nBytes = 0;
-	int nBytes_prev = 0;
-	int send_length = 0;
 	FILE* fp;
 	char path[100];
+
+	printf("Request type = run\n");
+	
 	if (strcmp(request, "inet") == 0) {
 		fp = popen("/sbin/ifconfig -a", "r");
 	}
@@ -149,31 +160,30 @@ int simpleRun(int connfd, char *request) {
 		Rio_writen(connfd, junk, 3*sizeof(char));
 		return -2;
 	}
-	
+	// Write success and padding to client
 	Rio_writen(connfd, &success, sizeof(char));
 	Rio_writen(connfd, junk, 3*sizeof(char));
-	while (fgets(path, sizeof(path), fp) != NULL) {
-		nBytes += strlen(path);
-		if (nBytes > 100) {
-			nBytes = 100;
-		}
-		send_length = htonl(nBytes - nBytes_prev);
-		Rio_writen(connfd, &send_length, sizeof(int));
-		
-		if ((nBytes - nBytes_prev) == 0) {
-			byte_limit_reached = 1;
-			break;
-		}
-
-		Rio_writen(connfd, path, nBytes - nBytes_prev);
-		nBytes_prev = nBytes;
+	// Get first 100 bytes of program output
+	printf("Getting path\n");
+	fgets(path, sizeof(path), fp);
+	printf("Path: %s\n", path);
+	// Count actual size of program output
+	while (path[nBytes]) {
+		nBytes++;
 	}
+	if(nBytes == 100) {
+		path[nBytes-1] = '\0';
+	}
+	printf("nBytes: %d\n", nBytes);
+	// Convert to network order
+	nBytes = htonl(nBytes);
+	// Write length of value to client
+	printf("Writing length to client\n");
+	Rio_writen(connfd, &nBytes, sizeof(int));
+	// Write length bytes of value to client
+	printf("Writing value to client\n");
+	Rio_writen(connfd, path, nBytes);
 	
-	if (byte_limit_reached == 0) {
-		send_length = htonl(0);
-		Rio_writen(connfd, &send_length, sizeof(int));
-	}
-
 	pclose(fp);
 
 	printf("Detail = %s\n", request);
@@ -258,7 +268,7 @@ int main(int argc, char **argv) {
 
 			case 1: ;	// get
 				char *vname = malloc(MAXVARNAME);
-				Rio_readnb(&rio, buf+8, 16);
+				Rio_readnb(&rio, buf+8, 16);	// name of variable
 				strncpy(vname, buf+8, 16);
 				simpleGet(connfd, vname);
 
@@ -281,10 +291,9 @@ int main(int argc, char **argv) {
 
 			case 3: ;	// run
 				char* command = malloc(8);
-				Rio_readnb(&rio, buf+8, 8);
+				Rio_readnb(&rio, buf+8, 8);	// program name
 				strncpy(command, buf+8, 8);
 				simpleRun(connfd, command);
-
 				free(command);
 				break;
 

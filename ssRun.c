@@ -2,6 +2,7 @@
 
 int main(int argc, char** argv){
 	int toserverfd, port, type = 3;
+	int size = 0;
 	unsigned int secretkey;
 	char *host, *program;
 	char *junk = "cat";
@@ -37,25 +38,18 @@ int main(int argc, char** argv){
 		fprintf(stderr, "failed\n");
 		return -2;
 	}
-
-	int size = 0;
-	int pos = 8;
-	do {
-		Rio_readnb(&rio, buf+4, sizeof(int));
-		size = ((buf[4] & 0xFF) << 24) | ((buf[5] & 0xFF) << 16) |                     
-			((buf[6] & 0xFF) << 8) | (buf[7] & 0xFF);
-		if (size != 0) {
-			Rio_readnb(&rio, buf+pos, size);
-			pos += size;
-		}
-		else {
-			break;
-		}
-	} while (1);
-
-	if (buf[8]) {
+	// Read size of value from server
+	printf("Reading size\n");
+	Rio_readnb(&rio, buf+4, sizeof(int));
+	size = ((buf[4] & 0xFF) << 24) | ((buf[5] & 0xFF) << 16) | 
+		((buf[6] & 0xFF) << 8) | (buf[7] & 0xFF);
+	printf("size: %d\n", size);
+	// Display value to client
+	if (size != 0) {
+		printf("Reading value\n");
+		Rio_readnb(&rio, buf+8, size);
 		printf("%s\n", buf+8);
-	} 
+	}
 
 	Close(toserverfd);
 	return 0;
