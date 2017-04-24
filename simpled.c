@@ -90,15 +90,11 @@ int simpleGet(int connfd, char *variableName) {
 }
 
 int simpleDigest(int connfd, char *data) {
-	int nBytes = 0;
+	int length, nBytes = 0;
 	printf("Request type = digest\n");
 	char command[256] = "sh -c \'echo `/bin/hostname` ";
-	printf("assigned command: %s\n", command);
-	printf("data: %s\n", data);
 	strcat(command, data);
-	printf("done with strcat: %s\n", command); 
 	strcat(command, " | /usr/bin/md5sum\'");
-	printf("done with command: %s\n", command);
 	FILE* fp;
 	char path[100];
 
@@ -110,11 +106,8 @@ int simpleDigest(int connfd, char *data) {
 	// Write success byte and padding to client
 	Rio_writen(connfd, &success, sizeof(char));
 	Rio_writen(connfd, junk, 3*sizeof(char));
-	printf("fgets\n");
 	// Get first 100 bytes of program output
-	printf("Getting path\n");
 	fgets(path, sizeof(path), fp);
-	printf("Path: %s\n", path);
 	// Count actual size of program output
 	while (path[nBytes]) {
 		nBytes++;
@@ -122,14 +115,11 @@ int simpleDigest(int connfd, char *data) {
 	if(nBytes == 100) {
 		path[nBytes-1] = '\0';
 	}
-	printf("nBytes: %d\n", nBytes);
 	// Convert to network order
-	nBytes = htonl(nBytes);
+	length = htonl(nBytes);
 	// Write length of value to client
-	printf("Writing length to client\n");
-	Rio_writen(connfd, &nBytes, sizeof(int));
+	Rio_writen(connfd, &length, sizeof(int));
 	// Write length bytes of value to client
-	printf("Writing value to client\n");
 	Rio_writen(connfd, path, nBytes);
 	pclose(fp);
 
@@ -139,7 +129,7 @@ int simpleDigest(int connfd, char *data) {
 }
 
 int simpleRun(int connfd, char *request) {
-	int nBytes = 0;
+	int length, nBytes = 0;
 	FILE* fp;
 	char path[100];
 
@@ -164,9 +154,7 @@ int simpleRun(int connfd, char *request) {
 	Rio_writen(connfd, &success, sizeof(char));
 	Rio_writen(connfd, junk, 3*sizeof(char));
 	// Get first 100 bytes of program output
-	printf("Getting path\n");
 	fgets(path, sizeof(path), fp);
-	printf("Path: %s\n", path);
 	// Count actual size of program output
 	while (path[nBytes]) {
 		nBytes++;
@@ -174,14 +162,11 @@ int simpleRun(int connfd, char *request) {
 	if(nBytes == 100) {
 		path[nBytes-1] = '\0';
 	}
-	printf("nBytes: %d\n", nBytes);
 	// Convert to network order
-	nBytes = htonl(nBytes);
+	length = htonl(nBytes);
 	// Write length of value to client
-	printf("Writing length to client\n");
-	Rio_writen(connfd, &nBytes, sizeof(int));
+	Rio_writen(connfd, &length, sizeof(int));
 	// Write length bytes of value to client
-	printf("Writing value to client\n");
 	Rio_writen(connfd, path, nBytes);
 	
 	pclose(fp);
@@ -285,7 +270,6 @@ int main(int argc, char **argv) {
 				}
 
 				Rio_readnb(&rio, buf+12, digSize);	// value of variable
-				printf("value of value: %s\n", buf+12);
 				simpleDigest(connfd, buf+12);
 				break;
 

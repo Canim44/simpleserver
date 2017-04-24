@@ -48,14 +48,12 @@ int main(int argc, char* argv[]){
 		return -2;
 	}
 	// Read size of value from server
-	printf("Reading size\n");
 	Rio_readnb(&rio, buf+4, sizeof(int));
 	size = ((buf[4] & 0xFF) << 24) | ((buf[5] & 0x55) << 16) |
 		((buf[6] & 0xFF) << 8) | (buf[7] & 0xFF);
-	printf("size: %d\n", size);
+	
 	// Display value to client
 	if (size != 0) {
-		printf("Reading value\n");
 		Rio_readnb(&rio, buf+8, size);
 		printf("%s\n", buf+8);
 	}
