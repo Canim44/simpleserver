@@ -2,25 +2,9 @@
 CS485-004: Server/Client Project
 Authors: Aaron Mueller, Connor VanMeter
 =======
-
 # DESCRIPTION
 `simpleserver` is a project for CS485G. It consists of a server and four
 client programs (descriptions below). This project was coded in C.
-
-# LIST OF FILES
-* README.txt: contains a description of files, project, and limitations
-* Makefile: file containg directives used with `make`
-* csapp.c: Provided socket syscalls and RIO library calls
-* csapp.h: header for csapp.h
-* simpled.c: server code containing library
-* ssSet.c: set an environmental variable to a value
-* ssGet.c: get an environmental variable's value
-* ssDigest.c: returns the result of
-sh -c 'echo `/bin/hostname` value | /usr/bin/md5sum'
-* ssRun.c: run a valid program (inet, hosts, uptime)
-
-NOTE: csapp.c and csapp.h are modified from code at
-http://csapp.cs.cmu.edu/public/code.html
 
 # HOW TO RUN/EXIT THIS PROJECT
 1. Use `make` to compile server and client programs
@@ -123,3 +107,7 @@ The following assumptions were made:
 * Data can be either binary or text
 * Server does not provide service unless the client and server SecretyKey match
 * The SecretKey is an unsigned int in the range of 0 and 2^32 - 1
+
+The following limitations were noted:
+* Variable names can include any character values, including special characters, numbers, 
+and/or binary data
