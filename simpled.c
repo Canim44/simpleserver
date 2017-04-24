@@ -35,21 +35,25 @@ int simpleSet(int connfd, char *variableName, char *value, int dataLength) {
 	int index = -1;
 	// find index of var name (if it exists)
 	int i;
-	for (i = 0; i < varSize; i++) {
+	for (i = 0; i < nVars; i++) {
 		if (strcmp(variableName, varName[i]) == 0) {
 			index = i;
 			break;
 		}
 	}
+	printf("finished variable name check\n");
 	// otherwise, put variable in next slot in array
 	if (index == -1) {
 		index = nVars;
 		nVars++;
 	}
+	printf("set index properly\n");
 	
 	// set var name and value
 	strcpy(varName[index], variableName);
+	printf("set variable name\n");
 	strcpy(varValue[index], value);
+	printf("set variable value \n");
 
 	Rio_writen(connfd, &success, sizeof(char));
 	Rio_writen(connfd, junk, 3*sizeof(char));
@@ -235,8 +239,8 @@ int main(int argc, char **argv) {
 		Rio_readnb(&rio, buf+5, 3);
 		switch (type) {
 			case 0: ;	// set
-				char *name = malloc(MAXVARNAME);
-				char *value;
+				char name[MAXVARNAME];
+				char value[MAXVARVALUE];
 				unsigned int size;
 				Rio_readnb(&rio, buf+8, 16);	// name of variable
 				strncpy(name, buf+8, 16);
@@ -247,13 +251,9 @@ int main(int argc, char **argv) {
 					size = MAXVARVALUE;
 				}
 
-				value = malloc(size);
 				Rio_readnb(&rio, buf+28, size);	// value of variable
 				strncpy(value, buf+28, size);
 				simpleSet(connfd, name, value, size);
-				
-				free(value);
-				free(name);
 				break;
 
 			case 1: ;	// get
