@@ -27,7 +27,7 @@ int simpleSet(int connfd, char *variableName, char *value, int dataLength) {
 
 		int i;
 		for (i = nVars; i < varSize; i++) {
-			varName[i] = malloc(MAXVARNAME+1);
+			varName[i] = malloc(MAXVARNAME);
 			varValue[i] = malloc(MAXVARVALUE);
 		}
 	}
@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
 	varName = malloc(varSize);
 	varValue = malloc(varSize);
 	for (i = 0; i < varSize; i++) {
-		varName[i] = (char*)malloc(MAXVARNAME+1);
+		varName[i] = (char*)malloc(MAXVARNAME);
 		varValue[i] = (char*)malloc(MAXVARVALUE);
 	}
 
@@ -251,9 +251,9 @@ int main(int argc, char **argv) {
 				Rio_readnb(&rio, buf+28, size);	// value of variable
 				strncpy(value, buf+28, size);
 				simpleSet(connfd, name, value, size);
-
-				free(name);
+				
 				free(value);
+				free(name);
 				break;
 
 			case 1: ;	// get
@@ -267,7 +267,6 @@ int main(int argc, char **argv) {
 
 			case 2: ;	// digest
 				unsigned int digSize;
-				char *digVal;
 				Rio_readnb(&rio, buf+8, sizeof(int));	// size of value
 				digSize = ((buf[8] & 0xFF) << 24) | ((buf[9] & 0xFF) << 16) |
 					((buf[10] & 0xFF) << 8) | (buf[11] & 0xFF);
@@ -275,12 +274,9 @@ int main(int argc, char **argv) {
 					digSize = MAXVARVALUE;
 				}
 
-				digVal = malloc(digSize);
 				Rio_readnb(&rio, buf+12, digSize);	// value of variable
-				strncpy(digVal, buf+12, digSize);
-				simpleDigest(connfd, digVal);
-
-				free(digVal);
+				printf("value of value: %s\n", buf+12);
+				simpleDigest(connfd, buf+12);
 				break;
 
 			case 3: ;	// run

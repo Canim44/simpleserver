@@ -1,7 +1,7 @@
 #include "csapp.h"
 
 int main(int argc, char* argv[]){
-	int toserverfd, port, varSize, type = 2; 
+	int toserverfd, port, varSize, send_length, type = 2; 
 	unsigned int secretkey;
 	char *host, *value;
 	char *junk = "cat";
@@ -19,6 +19,12 @@ int main(int argc, char* argv[]){
 	secretkey = htonl(atoi(argv[3]));
 	value = argv[4];
 	varSize = htonl(strlen(argv[4]));
+	if (strlen(argv[4]) > 100) {
+		send_length = 100;
+	}
+	else {
+		send_length = strlen(argv[4]);
+	}
 
 	toserverfd = open_clientfd(host, port);
 	Rio_readinitb(&rio, toserverfd);
@@ -31,7 +37,7 @@ int main(int argc, char* argv[]){
 	// Send length of value
 	Rio_writen(toserverfd, &varSize, sizeof(int));
 	// Send value to server
-	Rio_writen(toserverfd, value, strlen(argv[4]));
+	Rio_writen(toserverfd, value, send_length);
 
 	// Read success status and 3 bytes of padding from server
 	Rio_readnb(&rio, buf, sizeof(char));
