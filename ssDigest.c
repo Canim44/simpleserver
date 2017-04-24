@@ -1,7 +1,7 @@
 #include "csapp.h"
 
 int main(int argc, char* argv[]){
-	int toserverfd, port, varSize, send_length, type = 2; 
+	int toserverfd, port, varSize, send_length, size, type = 2; 
 	unsigned int secretkey;
 	char *host, *value;
 	char *junk = "cat";
@@ -47,15 +47,15 @@ int main(int argc, char* argv[]){
 		fprintf(stderr, "failed\n");
 		return -2;
 	}
-
-	int count = 0;
-	while ((Rio_readnb(&rio, buf, 256))) {
-		printf("%s", buf);
-		count++;
-	}
-
-	if (count == 1 && buf[0] == '\0') {
-		fprintf(stderr, "failed\n");
+	// Read size of value from server
+	Rio_readnb(&rio, buf+4, sizeof(int));
+	size = ((buf[4] & 0xFF) << 24) | ((buf[5] & 0x55) << 16) |
+		((buf[6] & 0xFF) << 8) | (buf[7] & 0xFF);
+	
+	// Display value to client
+	if (size != 0) {
+		Rio_readnb(&rio, buf+8, size);
+		printf("%s\n", buf+8);
 	}
 
 	Close(toserverfd);
